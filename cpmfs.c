@@ -896,11 +896,6 @@ static int parseLine(struct cpmSuperBlock *d, const char *format, char *line, in
           d->libdskGeometry[sizeof(d->libdskGeometry) - 1] = 0;
         }
       }
-      else if (argc>0 && argv[0][0]!='#' && argv[0][0]!=';')
-      {
-        fprintf(stderr,"%s: invalid keyword `%s' in line %d\n",cmd,argv[0],ln);
-        exit(1);
-      }
     }
     else if (argc > 0 && strcmp(argv[0],"diskdef")==0 &&
              (argc==2 || (argc==1 && format==NULL)))
