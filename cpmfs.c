@@ -390,7 +390,9 @@ static int readBlock(const struct cpmSuperBlock *d, int blockno, char *buffer, i
     if (counter>=start)
     {
 #ifdef CPMFS_DEBUG
-      fprintf(stderr,"readBlock: read sector %d/%d\n",d->skewtab[sect],track);
+    fprintf(stderr,
+	    "readBlock: reading from track %d sector %d (phys %d)\n",
+	    track, sect, d->skewtab[sect]);
 #endif
       if ((err=Device_readSector(&d->dev,track,d->skewtab[sect],buffer+(d->secLength*counter))))
       {
