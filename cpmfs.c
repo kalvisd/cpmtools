@@ -1480,7 +1480,7 @@ int cpmNamei(const struct cpmInode *dir, char const *filename, struct cpmInode *
       }
     }
 #ifdef CPMFS_DEBUG
-    fprintf(stderr,"cpmNamei: size=%ld\n",(long)i->size);
+    fprintf(stderr,"cpmNamei: %s: size=%ld\n", filename, (long)i->size);
 #endif
   }
   /*}}}*/
