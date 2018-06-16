@@ -386,7 +386,9 @@ static int readBlock(const struct cpmSuperBlock *d, int blockno, char *buffer, i
     char const *err;
 
     assert(d->skewtab[sect]>=0);
-    assert(d->skewtab[sect]<d->sectrk);
+    assert(sect<d->sectrk);
+    /* Allow the skew table to contain arbitrary sector numbers */
+    /* assert(d->skewtab[sect]<d->sectrk); */
     if (counter>=start)
     {
 #ifdef CPMFS_DEBUG
