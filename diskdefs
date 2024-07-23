@@ -542,6 +542,58 @@ diskdef microbee80
   libdsk:format ds80
 end
 
+# Microbee Dreamdisk 84 track 5.25" high density disks
+diskdef dreamdiskhd84
+  seclen 512
+  tracks 168
+  sectrk 17
+  blocksize 2048
+  maxdir 256
+  #skewtab 1,4,7,0,3,6,9,2,5,8
+  boottrk 2
+  os 2.2
+  libdsk:format hd84
+end
+
+# Microbee Dreamdisk 80 track 3.5" high density disks, 4k blocks
+diskdef dreamdiskhd80
+  seclen 512
+  tracks 160
+  sectrk 18
+  blocksize 4096
+  maxdir 256
+  skew 3
+  boottrk 2
+  os 2.2
+  libdsk:format hd80
+end
+
+# Microbee Dreamdisk 80 track 5.25" high density disks, 4k blocks
+diskdef dreamdiskhd82
+  seclen 512
+  tracks 160
+  sectrk 16
+  blocksize 4096
+  maxdir 256
+  skew 3
+  boottrk 2
+  os 2.2
+  libdsk:format hd82
+end
+
+# Microbee Dreamdisk 80 track 5.25" high density disks, 2k blocks
+diskdef dreamdiskhd8x
+  seclen 512
+  tracks 160
+  sectrk 16
+  blocksize 2048
+  maxdir 256
+  skew 3
+  boottrk 2
+  os 2.2
+  libdsk:format hd8x
+end
+
 # RC75x series
 diskdef rc75x
   seclen 1024
