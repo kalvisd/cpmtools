@@ -526,6 +526,7 @@ diskdef dreamdisk80
   skewtab 1,4,7,0,3,6,9,2,5,8
   boottrk 2
   os 2.2
+  libdsk:format ddds800
 end
 
 # Microbee 80 track 90mm disks
