@@ -14,8 +14,6 @@
 #include "term.h"
 /*}}}*/
 
-extern char **environ;
-
 static char *mapbuf;
 
 static struct tm *cpmtime(char lday, char hday, char hour, char min) /*{{{*/

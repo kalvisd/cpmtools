@@ -1,7 +1,7 @@
 .\" Believe it or not, reportedly there are nroffs which do not know \(en
 .if n .ds en -
 .if t .ds en \(en
-.TH DISKDEFS 5 "October 10, 2022" "CP/M tools" "File formats"
+.TH DISKDEFS 5 "January 15, 2023" "CP/M tools" "File formats"
 .SH NAME \"{{{roff}}}\"{{{
 diskdefs \- CP/M disk and file system format definitions
 .\"}}}
@@ -28,6 +28,7 @@ A diskdefs file consists of one or more entries of the format:
   [\fBos\fP \fB2.2\fP|\fB3\fP|\fBisx\fP|\fBp2dos\fP|\fBzsys\fP]
   [\fBoffset\fP \fIsize\fP]
   [\fBlogicalextents\fP \fIcount\fP]
+  [\fBextentsize\fP \fIsize\fP]
   [\fBlibdsk:format\fP \fIname\fP]
 \fBend\fP
 .RE
@@ -46,6 +47,11 @@ using an inflated DPB ALV0.  If the format makes use of that,
 This is for CP/M systems that map multiple logical tracks onto a physical
 track. While raw disk images can be configured for doing the same,
 accessing libdsk images needs to be done by physical tracks.
+.PP
+The \fBextentsize\fP only needs to be set for systems that have been
+patches to use extents less than 16384 bytes, which unaltered CP/M
+does not allow, e.g. 320 blocks of 1024 bytes, which results in 16-bit
+block numbers and 8 blocks per extent.
 .\"}}}
 .SH "SEE ALSO" \"{{{
 .IR cpm (5)

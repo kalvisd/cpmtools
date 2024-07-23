@@ -3,6 +3,7 @@
 
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <assert.h>
 #include <ctype.h>
 #include <errno.h>
 #include <stdio.h>
@@ -13,6 +14,7 @@
 
 #include "getopt_.h"
 #include "cpmfs.h"
+#include "filename.h"
 /*}}}*/
 
 const char cmd[]="cpmcp";
@@ -201,13 +203,12 @@ int main(int argc, char *argv[])
       {
         char *translate;
 
-        strcpy(dest,last);
-        strcat(dest,"/");
+        snprintf(dest,sizeof(dest),"%s/",last);
         translate=dest+strlen(dest);
-        strcat(dest,gargv[i]+2);
-        while ((translate=strchr(translate,'/'))) *translate=',';
+
+        cpm_to_host(translate, gargv[i]+2, sizeof(dest)-strlen(dest));
       }
-      else strcpy(dest,last);
+      else snprintf(dest,sizeof(dest),"%s",last);
       if (cpmToUnix(&root,gargv[i],dest)) exitcode=1;
     }
   }
@@ -219,7 +220,7 @@ int main(int argc, char *argv[])
     for (i=optind; i<(argc-1); ++i)
     {
       /* variables */ /*{{{*/
-      char *dest=(char*)0;
+      char const *dest=(char*)0;
       FILE *ufp;
       /*}}}*/
 
@@ -233,23 +234,20 @@ int main(int argc, char *argv[])
       {
         struct cpmInode ino;
         char cpmname[2+8+1+3+1]; /* 00foobarxy.zzy\0 */
-        char *translate;
         struct stat st;
 
         stat(argv[i],&st);
 
+        snprintf(cpmname,sizeof(cpmname),"%02d",userNumber(argv[argc-1]));
         if (todir)
         {
-          if ((dest=strrchr(argv[i],'/'))!=(char*)0) ++dest; else dest=argv[i];
-          snprintf(cpmname,sizeof(cpmname),"%02d%s",userNumber(argv[argc-1]),dest);
+          dest=mybasename(argv[i]);
         }
         else
         {
-          snprintf(cpmname,sizeof(cpmname),"%02d%s",userNumber(argv[argc-1]),strchr(argv[argc-1],':')+1);
+          dest=strchr(argv[argc-1],':')+1;
         }
-
-        translate=cpmname;
-        while ((translate=strchr(translate,','))) *translate='/';
+        host_to_cpm(cpmname+2,dest,sizeof(cpmname)-2);
 
         if (cpmCreat(&root,cpmname,&ino,0666)==-1) /* just cry */ /*{{{*/
         {
@@ -266,15 +264,16 @@ int main(int argc, char *argv[])
           cpmOpen(&ino,&file,O_WRONLY);
           do
           {
-            ssize_t j;
+            size_t j;
 
-            for (j=0; j<((ssize_t)sizeof(buf)/2) && (c=getc(ufp))!=EOF; ++j)
+            for (j=0; j<(sizeof(buf)/2) && (c=getc(ufp))!=EOF; ++j)
             {
               if (text && c=='\n') buf[j++]='\r';
-              buf[j]=c;
+              assert(c>=0);
+              buf[j]=(char)c;
             }
             if (text && c==EOF) buf[j++]='\032';
-            if (cpmWrite(&file,buf,j)!=j)
+            if (cpmWrite(&file,buf,j)!=(ssize_t)j)
             {
               fprintf(stderr,"%s: can not write %s: %s\n",cmd,dest,boo);
               ohno=1;
@@ -298,7 +297,7 @@ int main(int argc, char *argv[])
         }
         if (fclose(ufp)==EOF)
         {
-          fprintf(stderr,"%s: can not close %s: %s\n",cmd,dest,strerror(errno));
+          fprintf(stderr,"%s: can not close %s: %s\n",cmd,argv[i],strerror(errno));
           exitcode=1;
         }
       }

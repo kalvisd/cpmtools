@@ -29,7 +29,15 @@ Old CP/M 2.2 dir output.
 .IP \fB\-D\fP
 P2DOS 2.3 ddir-like output.
 .IP \fB\-F\fp
-CP/M 3.x dir output.
+CP/M 3.x dir output. CP/M 3 DIR does not count the time stamp directory entries
+not referenced
+by files and the disc label
+directory entry as used, resulting in a higher number of free entries
+that really are not free.
+\fBcpmls\fP counts everything as used that is not available for files,
+no matter if it is actually used or just reserved.
+The total bytes are the sum of all used blocks, whereas total 1k blocks
+are the sum of 1k blocks needed if that was used as block size.
 .IP \fB\-A\fp
 E2fs lsattr-like output.
 .IP \fB\-l\fP
@@ -54,7 +62,7 @@ CPMTOOLSFMT     Default format
 @DATADIR@/diskdefs	CP/M disk format definitions
 .\"}}}
 .SH AUTHORS \"{{{
-This program is copyright 1997\(en2021 Michael Haardt
+This program is copyright 1997\(en2023 Michael Haardt
 <michael@moria.de>.  The Windows port is copyright 2000, 2001, 2011 John Elliott
 <jce@seasip.demon.co.uk>.
 .PP

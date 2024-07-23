@@ -23,6 +23,17 @@ static int namecmp(const void *a, const void *b)
   return strcmp(*((const char * const *)a),*((const char * const *)b));
 }
 /*}}}*/
+/* sizetokb -- convert size to KByte taken by blocks */ /*{{{*/
+static long sizetokb(off_t size, off_t blocksize)
+{
+  /* In DR CP/M, the minimal block size is 1024, but in CP/M-65
+   * it may be lower.
+   */
+  off_t blocks = (size+blocksize-1)/blocksize;
+  off_t blocked_size = blocks*blocksize;
+  return (blocked_size+1023)/1024;
+}
+/*}}}*/
 /* onlyuser0 -- do all entries belong to user 0? */ /*{{{*/
 static int onlyuser0(char ** const dirent, int entries)
 {
@@ -89,7 +100,7 @@ static void oldddir(char **dirent, int entries, struct cpmInode *ino)
   struct cpmStat statbuf;
   struct cpmInode file;
 
-  if (entries>2)
+  if (entries>0)
   {
     int i,j,k,l,announce,user;
 
@@ -122,9 +133,7 @@ static void oldddir(char **dirent, int entries, struct cpmInode *ino)
 
           cpmNamei(ino,dirent[i],&file);
           cpmStat(&file,&statbuf);
-          printf(" %5.1ldK",(long) (statbuf.size+buf.f_bsize-1) /
-			buf.f_bsize*(buf.f_bsize/1024));
-
+          printf(" %5.1ldK",(long)sizetokb(statbuf.size, buf.f_bsize));
           printf(" %6.1ld ",(long)(statbuf.size/128));
           putchar(statbuf.mode&0200 ? ' ' : 'R');
           putchar(statbuf.mode&01000 ? 'S' : ' ');
@@ -159,10 +168,10 @@ static void old3dir(char **dirent, int entries, struct cpmInode *ino)
   struct cpmStat statbuf;
   struct cpmInode file;
 
-  if (entries>2)
+  if (entries>0)
   {
     int i,j,k,l,announce,user, attrib;
-    int totalBytes=0,totalRecs=0;
+    int totalKBytes=0,totalRecs=0;
 
     qsort(dirent,entries,sizeof(char*),namecmp);
     cpmStatFS(ino,&buf);
@@ -194,7 +203,7 @@ static void old3dir(char **dirent, int entries, struct cpmInode *ino)
           for (k=0; dirent[i][j]; ++j,++k) putchar(toupper(dirent[i][j]));
           for (; k<3; ++k) putchar(' ');
 
-          totalBytes+=statbuf.size;
+          totalKBytes+=(statbuf.size+1023)/1024;
           totalRecs+=(statbuf.size+127)/128;
           printf(" %5.1ldk",(long) (statbuf.size+buf.f_bsize-1) /
 			buf.f_bsize*(buf.f_bsize/1024));
@@ -233,10 +242,10 @@ static void old3dir(char **dirent, int entries, struct cpmInode *ino)
       }
       if (announce==2) announce=1;
     }
-    printf("\nTotal Bytes     = %6.1dk  ",(totalBytes+1023)/1024);
+    printf("\nTotal Bytes     = %6.1ldk  ",(buf.f_bused*buf.f_bsize)/1024);
     printf("Total Records = %7.1d  ",totalRecs);
     printf("Files Found = %4.1d\n",l);
-    printf("Total 1k Blocks = %6.1ld   ",(buf.f_bused*buf.f_bsize)/1024);
+    printf("Total 1k Blocks = %6.1d   ",totalKBytes);
     printf("Used/Max Dir Entries For Drive A: %4.1ld/%4.1ld\n",buf.f_files-buf.f_ffree,buf.f_files);
   }
   else printf("No files found\n");

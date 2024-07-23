@@ -104,45 +104,72 @@ static int mkfs(struct cpmSuperBlock *drive, const char *name, const char *forma
     static const char sig[] = "!!!TIME";
     unsigned int records;
     struct dsDate *ds;
-    struct cpmSuperBlock super;
+    struct cpmFile dsfile;
     const char *err;
+    struct utimbuf ut;
 
-    if ((err=Device_open(&super.dev,name,O_RDWR,NULL)))
+    Device_close(&drive->dev);
+    if ((err=Device_open(&drive->dev,name,O_RDWR,NULL)))
     {
       fprintf(stderr,"%s: can not open %s (%s)\n",cmd,name,err);
       exit(1);
     }
-    cpmReadSuper(&super,&root,format,uppercase);
+    cpmReadSuper(drive,&root,format,uppercase);
 
-    records=root.sb->maxdir/8;
+    records=(root.sb->maxdir+7)/8;
     if (!(ds=malloc(records*128)))
     {
-      cpmUmount(&super);
       return -1;
     }
     memset(ds,0,records*128);
     offset=15;
     for (i=0; i<records; i++)
     {
+      unsigned int cksum;
+
       for (j=0; j<7; j++,offset+=16)
       {
         *((char*)ds+offset) = sig[j];
       }
       /* skip checksum byte */
       offset+=16;
+
+      for (cksum=0,j=0; j<127; ++j) cksum+=*((unsigned char*)ds+i*128+j);
+      *((char*)ds+i*128+j)=cksum;
     }
 
-    /* Set things up so cpmSync will generate checksums and write the
-     * file.
+    /* The filesystem does not know about datestamper yet, because it
+     * was not there when it was mounted.
      */
-    if (cpmCreat(&root,"00!!!TIME&.DAT",&ino,0)==-1)
+
+    if (cpmCreat(&root,"00!!!TIME&.DAT",&ino,0222)==-1)
     {
       fprintf(stderr,"%s: Unable to create DateStamper file: %s\n",cmd,boo);
       return -1;
     }
-    root.sb->ds=ds;
-    root.sb->dirtyDs=1;
-    cpmUmount(&super);
+
+    if (cpmOpen(&ino,&dsfile,O_WRONLY) == -1
+        || cpmWrite(&dsfile,(char const*)ds,records*128) != records*128
+        || cpmClose(&dsfile) == -1)
+    {
+      fprintf(stderr,"%s: Unable to write DateStamper file: %s\n",cmd,boo);
+      return -1;
+    }
+
+    cpmChmod(&ino, 0);
+
+    cpmUmount(drive);
+    if ((err=Device_open(&drive->dev,name,O_RDWR,NULL)))
+    {
+      fprintf(stderr,"%s: can not open %s (%s)\n",cmd,name,err);
+      exit(1);
+    }
+    cpmReadSuper(drive,&root,format,uppercase);
+
+    cpmNamei(&root,"00!!!TIME&.DAT",&ino);
+    time(&ut.actime);
+    time(&ut.modtime);
+    cpmUtime(&ino,&ut);
   }
   /*}}}*/
 
@@ -197,36 +224,42 @@ int main(int argc, char *argv[]) /*{{{*/
   drive.dev.opened=0;
   cpmReadSuper(&drive,&root,format,uppercase);
   bootTrackSize=drive.boottrk*drive.secLength*drive.sectrk;
-  if ((bootTracks=malloc(bootTrackSize))==(void*)0)
+  if (bootTrackSize)
   {
-    fprintf(stderr,"%s: can not allocate boot track buffer: %s\n",cmd,strerror(errno));
-    exit(1);
-  }
-  memset(bootTracks,0xe5,bootTrackSize);
-  used=0; 
-  for (c=0; c<4 && boot[c]; ++c)
-  {
-    int fd;
-    size_t size;
-
-    if ((fd=open(boot[c],O_BINARY|O_RDONLY))==-1)
+    if ((bootTracks=malloc(bootTrackSize))==(void*)0)
     {
-      fprintf(stderr,"%s: can not open %s: %s\n",cmd,boot[c],strerror(errno));
+      fprintf(stderr,"%s: can not allocate boot track buffer: %s\n",cmd,strerror(errno));
       exit(1);
     }
-    size=read(fd,bootTracks+used,bootTrackSize-used);
+    memset(bootTracks,0xe5,bootTrackSize);
+    used=0; 
+    for (c=0; c<4 && boot[c]; ++c)
+    {
+      int fd;
+      size_t size;
+
+      if ((fd=open(boot[c],O_BINARY|O_RDONLY))==-1)
+      {
+        fprintf(stderr,"%s: can not open %s: %s\n",cmd,boot[c],strerror(errno));
+        exit(1);
+      }
+      size=read(fd,bootTracks+used,bootTrackSize-used);
 #if 0
-    fprintf(stderr,"%d %04x %s\n",c,used+0x800,boot[c]);
+      fprintf(stderr,"%d %04x %s\n",c,used+0x800,boot[c]);
 #endif
-    if (size%drive.secLength) size=(size|(drive.secLength-1))+1;
-    used+=size;
-    close(fd);
+      if (size%drive.secLength) size=(size|(drive.secLength-1))+1;
+      used+=size;
+      close(fd);
+    }
   }
+  else bootTracks=(char*)0;
   if (mkfs(&drive,image,format,label,bootTracks,timeStamps,uppercase)==-1)
   {
     fprintf(stderr,"%s: can not make new file system: %s\n",cmd,boo);
     exit(1);
   }
-  else exit(0);
+  if (bootTracks) free(bootTracks);
+  cpmUmount(&drive);
+  exit(0);
 }
 /*}}}*/

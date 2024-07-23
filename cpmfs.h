@@ -24,7 +24,7 @@ typedef int cpm_attr_t;
 
 struct cpmInode
 {
-  ino_t ino;
+  ino_t ino; /* first extent number for files, > extent for pseudo files */
   mode_t mode;
   off_t size;
   cpm_attr_t attr;
@@ -110,6 +110,7 @@ struct cpmSuperBlock
   int type;
   int size;
   int extents; /* logical extents per physical extent */
+  int extentsize; /* pretty much always 16384 */
   int *skewtab;
   char libdskGeometry[256];
 
@@ -142,7 +143,7 @@ struct cpmStatFS
 extern char const cmd[];
 extern char const *boo;
 
-int match(char const *a, char const *pattern);
+int cpmIsFileChar(char c, int type);
 void cpmglob(int opti, int argc, char * const argv[], struct cpmInode *root, int *gargc, char ***gargv);
 void cpmglobfree(char **dirent, int entries);
 

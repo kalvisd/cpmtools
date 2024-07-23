@@ -2625,8 +2625,8 @@ IFS=$ac_save_IFS
 case $host_os in *\ *) host_os=`echo "$host_os" | sed 's/ /-/g'`;; esac
 
 
-VERSION=2.23
-UPDATED='November 2, 2022'
+VERSION=2.24
+UPDATED='January 15, 2023'
 
 DEVICE="posix"
 TERM="curses"

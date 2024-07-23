@@ -70,7 +70,7 @@ CPMTOOLSFMT	Default format
 @DATADIR@/diskdefs	CP/M disk format definitions
 .\"}}}
 .SH AUTHORS \"{{{
-This program is copyright 1997\(en2021 Michael Haardt
+This program is copyright 1997\(en2023 Michael Haardt
 <michael@moria.de> and copyright 2000, 2001, 2011 John Elliott
 <jce@seasip.demon.co.uk>.
 .PP

@@ -1,7 +1,7 @@
 .\" Believe it or not, reportedly there are nroffs which do not know \(en
 .if n .ds en -
 .if t .ds en \(en
-.TH CPM 5 "October 10, 2022" "CP/M tools" "File formats"
+.TH CPM 5 "January 15, 2023" "CP/M tools" "File formats"
 .SH NAME \"{{{roff}}}\"{{{
 cpm \- CP/M disk and file system format
 .\"}}}
@@ -29,7 +29,9 @@ but disk driver specific)
 .sp
 .RE
 A block is the smallest allocatable storage unit.  CP/M supports block
-sizes of 1024, 2048, 4096, 8192 and 16384 bytes.  Unfortunately, this
+sizes of 1024, 2048, 4096, 8192 and 16384 bytes.  CPM-65 also allows
+512 bytes.
+Unfortunately, this
 format specification is not stored on the disk and there are lots of
 formats.  Accessing a block is performed by accessing its sectors, which
 are stored with the given software skew.  \fBcpmtools\fP always counts
@@ -108,8 +110,25 @@ or used for password extent (CP/M 3 or higher)
 .\"}}}
 .LP
 .\"{{{ F0-E2  = file name and extension
-\fBF0\*(enE2\fP are the file name and its extension.  They may consist of
-any printable 7 bit ASCII character but: \fB< > . , ; : = ? * [ ]\fP.
+\fBF0\*(enE2\fP are the file name and its extension.
+CP/M is not consistent when it comes to the forbidden characters: The
+CP/M 2.2 Operating System Manual allows alphanumerics and printable characters
+other than \fB< > . , ; : = ? * [ ] _ % | ( ) / \e\fP. There is an implied
+dot between name and extension, though. Despite the specification, the CCP only forbids
+\fB< > . ; : = ? * _\fP in subroutine delim, of course allowing the dot between name and extension.
+The underscore used to be a left arrow sign in early ASCII history.
+The CP/M 2.2 BDOS requires the application to convert the filename into
+a FCB and performs no checks on that! Some applications do not replicate
+those checks and allow to create files with illegal characters.
+.LP
+CP/M 3 has BDOS call 152 to parse a file name into a FCB and uses the
+delimiters \fB< > . , ; : = [ ] |\fP. \fB? and *\fP
+are still reserved as well, but may be part of a filename for
+globbing, just not part of directory entries. The CCP uses that function
+and its implementation conforms to the manual. Given the actual
+implementations, file systems are not entirely compatible between
+version 2.2 and 3.
+.LP
 The file name must not be empty, the extension may be empty.  Both are
 padded with blanks.  The highest bit of each character of the file name
 and extension is used as attribute.  The attributes have the following
@@ -140,17 +159,26 @@ zero, only non-privileged commands may be executed.
 .\"}}}
 .LP
 .\"{{{ Xl, Xh = extent number
-\fBXl\fP and \fBXh\fP store the extent number.  A file may use more than
-one directory entry, if it contains more blocks than an extent can hold.
-In this case, more extents are allocated and each of them is numbered
-sequentially with an extent number.  If a physical extent stores more than
-16k, it is considered to contain multiple logical extents, each pointing
-to 16k data, and the extent number of the last used logical extent
-is stored.  Note: Some formats decided to always store only one logical
-extent in a physical extent, thus wasting extent space.  CP/M 2.2 allows
-512 extents per file, CP/M 3 and higher allow up to 2048.  Bit 5\*(en7 of
-Xl are 0, bit 0\*(en4 store the lower bits of the extent number.  Bit 6
-and 7 of Xh are 0, bit 0\*(en5 store the higher bits of the extent number.
+\fBXl\fP and \fBXh\fP store the extent number.  Bit 5\*(en7 of Xl are 0,
+bit 0\*(en4 store the lower bits of the extent number.  Bit 6 and 7 of Xh
+are 0, bit 0\*(en5 store the higher bits of the extent number.  A file
+may use more than one directory entry, if it contains more blocks than
+an extent can hold.  In this case, more extents are allocated and each
+of them is numbered sequentially with an extent number.  If a physical
+extent stores more than 16k, it is considered to contain multiple logical
+extents, each pointing to 16k data, and the extent number of the last
+used logical extent is stored.  Note: Some formats decided to always store
+only one logical extent in a physical extent, thus wasting extent space.
+CP/M 2.2 allows 512 extents per file, CP/M 3 and higher allow up to 2048.
+Why 16k?
+CP/M 1.4 stored 128 records of 128 bytes per extent, which is 16k.
+CP/M measures file sizes in records, not blocks.
+CP/M does not allow to use disk formats where an extent would hold less
+than 16k, e.g. a disk of 320 blocks with the block size 1024, because then
+an extent would only store 64 instead of 128 sectors. Other CP/M compatible
+(more or less) systems had other solutions to this problem by e.g. just
+using the addressable capacity of one extent as extent size, which is why
+cpmtools allows to configure the extent size for such formats.
 .\"}}}
 .LP
 .\"{{{ Rc, Bc = record count, byte count

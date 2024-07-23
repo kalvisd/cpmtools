@@ -1,4 +1,4 @@
-.TH CPMCP 1 "October 10, 2022" "CP/M tools" "User commands"
+.TH CPMCP 1 "January 15, 2023" "CP/M tools" "User commands"
 .SH NAME \"{{{roff}}}\"{{{
 cpmcp \- copy files from and to CP/M disks
 .\"}}}
@@ -53,10 +53,14 @@ meaning in
 .IR sh (1)
 file name patterns.
 .PP
-On CP/M, the slash is a legal file name character.  When copying such files
+On CP/M, the slash is a legal file name character and on POSIX systems
+it is not, so on those when copying such files
 to the host, it is translated to a comma.  Filenames with a comma have that
 translated back to a slash on CP/M.  That is no restriction, because a comma
-is not a legal CP/M filename character.
+is not a legal CP/M filename character, although CP/M 2.2 silently accepts
+it despite the manual saying otherwise.
+.PP
+On other host OS there may be different file name translations.
 .\"}}}
 .SH OPTIONS \"{{{
 .IP "\fB\-f\fP \fIformat\fP"
@@ -85,7 +89,7 @@ CPMTOOLSFMT     Default format
 ${prefix}/share/diskdefs	CP/M disk format definitions
 .\"}}}
 .SH AUTHORS \"{{{
-This program is copyright 1997\(en2021 Michael Haardt
+This program is copyright 1997\(en2023 Michael Haardt
 <michael@moria.de>.  The Windows port is copyright 2000, 2001, 2011 John Elliott
 <jce@seasip.demon.co.uk>.
 .PP

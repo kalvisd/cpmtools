@@ -1944,8 +1944,6 @@ diskdef HP25
   os 2.2
 end
 
-
-
 diskdef yaze512
 # BSH 4 BLM 15 EXM 1 DSM 255 DRM 1023 AL0 0FFH AL1 0FFH OFS 0
 seclen 128
@@ -1957,4 +1955,17 @@ skew 1
 offset 128
 boottrk 0
 os 3
+end
+
+# ELEKTOR Junior Computer CPM-65
+diskdef JC
+  seclen 256
+  tracks 80
+  sectrk 16
+  blocksize 1024
+  maxdir 128
+  skew 0
+  boottrk 2
+  os 2.2
+  extentsize 8192
 end

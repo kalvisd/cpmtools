@@ -79,6 +79,65 @@ static int pwdCheck(int extent, const char *pwd, char decode)
   return 0;
 }
 /*}}}*/
+/* dirCheck -- check name or extension */ /*{{{*/
+static int dirCheck(char const *str, size_t len, int allow_empty, int type)
+{
+  size_t i;
+  int in_name=1;
+
+  for (i=0; i<len; ++i)
+  {
+    char c;
+
+    c=str[i]&0x7f;
+    if (in_name)
+    {
+      if (islower(c)) return -1;
+      if (i==0 && c==' ' && !allow_empty) return -1;
+      if (c==' ') in_name=0;
+      else if (!cpmIsFileChar(c,type)) return -1;
+    }
+    else
+    {
+      if (c!=' ') return -1;
+    }
+  }
+  return 0;
+}
+/*}}}*/
+/* filesize -- return file size */ /*{{{*/
+static int filesize(struct cpmSuperBlock const *sb, int extent)
+{
+  struct PhysDirectoryEntry *dir;
+  int block,size;
+
+  dir=sb->dir+extent;
+  size=EXTENT(dir->extnol,dir->extnoh)*sb->extentsize;
+
+  if (sb->size<=256) for (block=15; block>=0; --block)
+  {
+    if (dir->pointers[block]) break;
+  }
+  else for (block=7; block>=0; --block)
+  {
+    if (dir->pointers[2*block] || dir->pointers[2*block+1]) break;
+  }
+  if (dir->blkcnt)
+  {
+    size+=((dir->blkcnt&0xff)-1)*128;
+    if (sb->type & CPMFS_ISX)
+    {
+      size += (128 - dir->lrc);
+    }
+    else
+    {
+      size+=dir->lrc ? (dir->lrc&0xff) : 128;
+    }
+  }
+
+  return size;
+}
+/*}}}*/
 /* ask -- ask user and return answer */ /*{{{*/
 static int ask(const char *msg)
 {
@@ -157,42 +216,27 @@ static int fsck(struct cpmInode *root, const char *image)
     if (*status>=0 && *status<=(sb->type==CPMFS_P2DOS ? 31 : 15)) /* directory entry */ /*{{{*/
     {
       /* check name and extension */ /*{{{*/
+      if (dirCheck(dir->name,8,0,sb->type)==-1)
       {
-        int i;
-        char *c;
-
-        for (i=0; i<8; ++i)
+        printf("Error: Bad name (extent=%d, name=\"%s\")\n",extent,prfile(sb,extent));
+        if (ask("Remove file"))
         {
-          c=&(dir->name[i]);
-          if (!ISFILECHAR(i,*c&0x7f) || islower(*c&0x7f))
-          {
-            printf("Error: Bad name (extent=%d, name=\"%s\", position=%d)\n",extent,prfile(sb,extent),i);
-            if (ask("Remove file"))
-            {
-              *status=(char)0xE5;
-              ret|=MODIFIED;
-              break;
-            }
-            else ret|=BROKEN;
-          }
+          *status=(char)0xE5;
+          ret|=MODIFIED;
+          continue;
         }
-        if (*status==(char)0xe5) continue;
-        for (i=0; i<3; ++i)
+        else ret|=BROKEN;
+      }
+      if (dirCheck(dir->ext,3,1,sb->type)==-1)
+      {
+        printf("Error: Bad extension (extent=%d, name=\"%s\")\n",extent,prfile(sb,extent));
+        if (ask("Remove file"))
         {
-          c=&(dir->ext[i]);
-          if (!ISFILECHAR(1,*c&0x7f) || islower(*c&0x7f))
-          {
-            printf("Error: Bad name (extent=%d, name=\"%s\", position=%d)\n",extent,prfile(sb,extent),i);
-            if (ask("Remove file"))
-            {
-              *status=(char)0xE5;
-              ret|=MODIFIED;
-              break;
-            }
-            else ret|=BROKEN;
-          }
+          *status=(char)0xE5;
+          ret|=MODIFIED;
+          continue;
         }
-        if (*status==(char)0xe5) continue;
+        else ret|=BROKEN;
       }
       /*}}}*/
       /* check extent number */ /*{{{*/
@@ -295,6 +339,33 @@ static int fsck(struct cpmInode *root, const char *image)
       if (((EXTENT(dir->extnol,dir->extnoh)==3 && dir->blkcnt>=126) || EXTENT(dir->extnol,dir->extnoh)>=4) && (dir->ext[0]&0x7f)=='C' && (dir->ext[1]&0x7f)=='O' && (dir->ext[2]&0x7f)=='M')
       {
         printf("Warning: Oversized .COM file (extent=%d, name=\"%s\")\n",extent,prfile(sb,extent));
+      }
+      /*}}}*/
+      /* check DateStamper file */ /*{{{*/
+      if ((dir->name[0]&0x7f)=='!'
+          && (dir->name[1]&0x7f)=='!'
+          && (dir->name[2]&0x7f)=='!'
+          && (dir->name[3]&0x7f)=='T'
+          && (dir->name[4]&0x7f)=='I'
+          && (dir->name[5]&0x7f)=='M'
+          && (dir->name[6]&0x7f)=='E'
+          && (dir->name[7]&0x7f)=='&'
+          && (dir->ext[0]&0x7f)=='D'
+          && (dir->ext[1]&0x7f)=='A'
+          && (dir->ext[2]&0x7f)=='T')
+      {
+        int has_size, should_size;
+
+        if (extent) printf("Warning: DateStamper file not first file (extent=%d, name=\"%s\")\n",extent,prfile(sb,extent));
+
+        if (!(dir->ext[0]&0x80)) printf("Warning: DateStamper file not read-only (extent=%d, name=\"%s\")\n",extent,prfile(sb,extent));
+
+        should_size=sb->maxdir*16;
+        has_size=filesize(sb, extent);
+        if (has_size!=should_size)
+        {
+          printf("Warning: DateStamper file is %d, should be %d (extent=%d, name=\"%s\")\n",has_size,should_size,extent,prfile(sb,extent));
+        }
       }
       /*}}}*/
     }
@@ -402,42 +473,27 @@ static int fsck(struct cpmInode *root, const char *image)
     else if (sb->type==CPMFS_DR3 && *status>=16 && *status<=31) /* password */ /*{{{*/
     {
       /* check name and extension */ /*{{{*/
+      if (dirCheck(dir->name,8,0,sb->type)==-1)
       {
-        int i;
-        char *c;
-
-        for (i=0; i<8; ++i)
+        printf("Error: Bad name (extent=%d, name=\"%s\")\n",extent,prfile(sb,extent));
+        if (ask("Clear password entry"))
         {
-          c=&(dir->name[i]);
-          if (!ISFILECHAR(i,*c&0x7f) || islower(*c&0x7f))
-          {
-            printf("Error: Bad name (extent=%d, name=\"%s\", position=%d)\n",extent,prfile(sb,extent),i);
-            if (ask("Clear password entry"))
-            {
-              *status=(char)0xE5;
-              ret|=MODIFIED;
-              break;
-            }
-            else ret|=BROKEN;
-          }
+          *status=(char)0xE5;
+          ret|=MODIFIED;
+          continue;
         }
-        if (*status==(char)0xe5) continue;
-        for (i=0; i<3; ++i)
+        else ret|=BROKEN;
+      }
+      if (dirCheck(dir->ext,3,1,sb->type)==-1)
+      {
+        printf("Error: Bad extension (extent=%d, name=\"%s\")\n",extent,prfile(sb,extent));
+        if (ask("Clear password entry"))
         {
-          c=&(dir->ext[i]);
-          if (!ISFILECHAR(1,*c&0x7f) || islower(*c&0x7f))
-          {
-            printf("Error: Bad name (extent=%d, name=\"%s\", position=%d)\n",extent,prfile(sb,extent),i);
-            if (ask("Clear password entry"))
-            {
-              *status=(char)0xE5;
-              ret|=MODIFIED;
-              break;
-            }
-            else ret|=BROKEN;
-          }
+          *status=(char)0xE5;
+          ret|=MODIFIED;
+          continue;
         }
-        if (*status==(char)0xe5) continue;
+        else ret|=BROKEN;
       }
       /*}}}*/
       /* check password */ /*{{{*/

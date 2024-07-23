@@ -47,8 +47,8 @@ cpmls$(EXEEXT):		cpmls$(OBJEXT) cpmfs$(OBJEXT) getopt$(OBJEXT) getopt1$(OBJEXT) 
 cpmrm$(EXEEXT):		cpmrm$(OBJEXT) cpmfs$(OBJEXT) getopt$(OBJEXT) getopt1$(OBJEXT) $(DEVICEOBJ) $(LDDEPS)
 		$(CC) $(LDFLAGS) -o $@ cpmrm$(OBJEXT) cpmfs$(OBJEXT) getopt$(OBJEXT) getopt1$(OBJEXT) $(DEVICEOBJ) $(LIBS)
 
-cpmcp$(EXEEXT):		cpmcp$(OBJEXT) cpmfs$(OBJEXT) getopt$(OBJEXT) getopt1$(OBJEXT) $(DEVICEOBJ) $(LDDEPS)
-		$(CC) $(LDFLAGS) -o $@ cpmcp$(OBJEXT) cpmfs$(OBJEXT) getopt$(OBJEXT) getopt1$(OBJEXT) $(DEVICEOBJ) $(LIBS)
+cpmcp$(EXEEXT):		cpmcp$(OBJEXT) cpmfs$(OBJEXT) getopt$(OBJEXT) getopt1$(OBJEXT) $(DEVICEOBJ) filename_posix$(OBJEXT) $(LDDEPS)
+		$(CC) $(LDFLAGS) -o $@ cpmcp$(OBJEXT) cpmfs$(OBJEXT) getopt$(OBJEXT) getopt1$(OBJEXT) $(DEVICEOBJ) filename_posix$(OBJEXT) $(LIBS)
 
 cpmchmod$(EXEEXT):	cpmchmod$(OBJEXT) cpmfs$(OBJEXT) getopt$(OBJEXT) getopt1$(OBJEXT) $(DEVICEOBJ) $(LDDEPS)
 		$(CC) $(LDFLAGS) -o $@ cpmchmod$(OBJEXT) cpmfs$(OBJEXT) getopt$(OBJEXT) getopt1$(OBJEXT) $(DEVICEOBJ) $(LIBS)

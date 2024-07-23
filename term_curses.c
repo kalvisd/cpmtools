@@ -62,7 +62,7 @@ void term_printf(char const *fmt, ...) /*{{{*/
 /*}}}*/
 void term_putch(char ch) /*{{{*/
 {
-  addch(ch);
+  addch(ch&0xff);
 }
 /*}}}*/
 int term_getch(void) /*{{{*/
