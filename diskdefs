@@ -501,7 +501,7 @@ diskdef microbee40
   skewtab 1,4,7,0,3,6,9,2,5,8
   boottrk 2
   os 2.2
-  libdsk:format mbee400
+  libdsk:format ds40
 end
 
 diskdef dreamdisk40
@@ -513,8 +513,10 @@ diskdef dreamdisk40
   skewtab 1,4,7,0,3,6,9,2,5,8
   boottrk 2
   os 2.2
+  libdsk:format ddds400
 end
 
+# Microbee 80 track 5.25" disks
 diskdef dreamdisk80
   seclen 512
   tracks 160
