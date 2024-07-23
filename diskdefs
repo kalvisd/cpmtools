@@ -528,6 +528,19 @@ diskdef dreamdisk80
   os 2.2
 end
 
+# Microbee 80 track 90mm disks
+diskdef microbee80
+  seclen 512
+  tracks 160
+  sectrk 10
+  blocksize 4096
+  maxdir 128
+  skewtab 1,4,7,0,3,6,9,2,5,8
+  boottrk 4
+  os 2.2
+  libdsk:format ds80
+end
+
 # RC75x series
 diskdef rc75x
   seclen 1024
