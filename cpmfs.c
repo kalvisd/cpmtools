@@ -419,12 +419,17 @@ static int writeBlock(const struct cpmSuperBlock *d, int blockno, char const *bu
   assert(blockno<d->size);
   assert(buffer!=(char const *)0);
 
-#ifdef CPMFS_DEBUG
-  fprintf(stderr,"writeBlock: write block %d %d-%d\n",blockno,start,end);
-#endif
   if (end < 0) end=d->blksiz/d->secLength-1;
   sect  = (blockno*(d->blksiz/d->secLength) + bootOffset(d)) % d->sectrk;
   track = (blockno*(d->blksiz/d->secLength) + bootOffset(d)) / d->sectrk;
+#ifdef CPMFS_DEBUG
+  fprintf(stderr
+	  , "writeBlock: write block %d %d-%d"
+	  " track %d sector %d (physical %d)\n"
+	  , blockno, start, end
+	  , track, sect, d->skewtab[sect]
+      );
+#endif
   for (counter = 0; counter<=end; ++counter)
   {
     char const *err;
