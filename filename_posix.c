@@ -3,7 +3,13 @@
 
 #include "filename.h"
 
-void cpm_to_host(char *dst, char const *restrict src, size_t capacity) /*{{{C}}}*//*{{{*/
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199900L
+# define RESTRICT restrict
+#else
+# define RESTRICT
+#endif
+
+void cpm_to_host(char *dst, char const *RESTRICT src, size_t capacity) /*{{{C}}}*//*{{{*/
 {
   while (*src && capacity>0)
   {
@@ -16,7 +22,7 @@ void cpm_to_host(char *dst, char const *restrict src, size_t capacity) /*{{{C}}}
   else *(dst-1)='\0';
 }
 /*}}}*/
-void host_to_cpm(char *dst, char const *restrict src, size_t capacity) /*{{{*/
+void host_to_cpm(char *dst, char const *RESTRICT src, size_t capacity) /*{{{*/
 {
   while (*src && capacity>0)
   {
