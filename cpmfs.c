@@ -66,7 +66,7 @@ int cpmIsFileChar(char c, int type)
   if (type == CPMFS_DR3)
     return (c>' ' && c!='<' && c!='>' && c!='.' && c!=',' && c!=';' && c!=':' && c!='=' && c!='?' && c!='*' && c!='[' && c!=']' && c!='|' && !islower(c));
   else
-    return (c>' ' && c!='<' && c!='>' && c!='.'           && c!=';' && c!=':' && c!='=' && c!='?' && c!='*' && c!= '_' && !islower(c));
+    return (c>' ' && c!='<' && c!='>' && c!='.'           && c!=';' && c!=':' && c!='=' && c!='?' && c!='*' &&           !islower(c));
 }
 /*}}}*/
 /* splitFilename      -- split file name into name and extension */ /*{{{*/
