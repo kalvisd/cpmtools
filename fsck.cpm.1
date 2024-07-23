@@ -1,4 +1,4 @@
-.TH FSCK.CPM 1 "Jan 23, 2019" "CP/M tools" "User commands"
+.TH FSCK.CPM 1 "October 10, 2022" "CP/M tools" "User commands"
 .SH NAME ..\"{{{roff}}}\"{{{
 fsck.cpm \- check a CP/M file system
 .\"}}}
@@ -8,6 +8,7 @@ fsck.cpm \- check a CP/M file system
 .RB [ \-f
 .IR format ]
 .RB [ \-n ]
+.RB [ \-u ]
 .I image
 .ad b
 .\"}}}
@@ -30,6 +31,8 @@ libdsk driver type, e.g. \fBtele\fP for Teledisk images or \fBraw\fP for raw ima
 (requires building cpmtools with support for libdsk).
 .IP "\fB\-n\fP"
 Open the file system read-only and do not repair any errors.
+.IP "\fB\-u\fP"
+Show all CP/M file names in upper case.
 .\"}}}
 .SH "RETURN VALUE" .\"{{{
 Upon successful completion, exit code 0 is returned.
@@ -55,7 +58,7 @@ The number of used blocks includes the blocks used for system tracks
 and the directory.
 .\"}}}
 .SH AUTHORS .\"{{{
-This program is copyright 1997\(en2012 Michael Haardt
+This program is copyright 1997\(en2021 Michael Haardt
 <michael@moria.de>.  The Windows port is copyright 2000, 2001, 2011 John Elliott
 <jce@seasip.demon.co.uk>.
 .PP

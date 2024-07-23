@@ -11,10 +11,6 @@
 #include "getopt_.h"
 #include "cpmdir.h"
 #include "cpmfs.h"
-
-#ifdef USE_DMALLOC
-#include <dmalloc.h>
-#endif
 /*}}}*/
 /* #defines */ /*{{{*/
 /* your favourite password *:-) */
@@ -240,12 +236,12 @@ static int fsck(struct cpmInode *root, const char *image)
       {
         int block,min,max,i;
 
-        min=(sb->maxdir*32+sb->blksiz-1)/sb->blksiz;
+        min=sb->dirblks;
         max=sb->size;
         for (i=0; i<16; ++i)
         {
           block=dir->pointers[i]&0xff;
-          if (sb->size>=256) block+=(dir->pointers[++i]&0xff)<<8;
+          if (sb->size>256) block+=(dir->pointers[++i]&0xff)<<8;
           if (block>0)
           {
             ++usedBlocks;
@@ -278,8 +274,8 @@ static int fsck(struct cpmInode *root, const char *image)
         {
         /* [JCE] Rewritten because the previous implementation didn't work
          *       properly with Visual C++ */
-          if (dir->pointers[i] || (sb->size>=256 && dir->pointers[i+1])) ++used;
-          if (sb->size >= 256) ++i;
+          if (dir->pointers[i] || (sb->size>256 && dir->pointers[i+1])) ++used;
+          if (sb->size>256) ++i;
         }
         recordsInBlocks=(((unsigned char)dir->blkcnt)*128+sb->blksiz-1)/sb->blksiz;
         if (recordsInBlocks!=used)
@@ -492,13 +488,13 @@ static int fsck(struct cpmInode *root, const char *image)
     for (i=0; i<16; ++i)
     {
       block=dir->pointers[i]&0xff;
-      if (sb->size>=256) block+=(dir->pointers[++i]&0xff)<<8;
+      if (sb->size>256) block+=(dir->pointers[++i]&0xff)<<8;
       for (extent2=0; extent2<sb->maxdir; ++extent2) if ((dir2=sb->dir+extent2)->status>=0 && dir2->status<=(sb->type==CPMFS_P2DOS ? 31 : 15))
       {
         for (j=0; j<16; ++j)
         {
           block2=dir2->pointers[j]&0xff;
-          if (sb->size>=256) block2+=(dir2->pointers[++j]&0xff)<<8;
+          if (sb->size>256) block2+=(dir2->pointers[++j]&0xff)<<8;
           if (block!=0 && block2!=0 && block==block2 && !(extent==extent2 && i==j))
           {
             printf("Error: Multiple allocated block (extent=%d,%d, name=\"%s\"",extent,extent2,prfile(sb,extent));
@@ -547,7 +543,7 @@ static int fsck(struct cpmInode *root, const char *image)
       for (i=0; i<16; ++i)
       {
         block=dir->pointers[i]&0xff;
-        if (sb->size>=256) block+=(dir->pointers[++i]&0xff)<<8;
+        if (sb->size>256) block+=(dir->pointers[++i]&0xff)<<8;
         if (previous!=-1)
         {
           if (block!=0 && block!=(previous+1)) ++fragmented;
@@ -573,17 +569,19 @@ int main(int argc, char *argv[])
   const char *image;
   const char *format;
   const char *devopts=NULL;
+  int uppercase=0;
   int c,usage=0;
   struct cpmSuperBlock sb;
   struct cpmInode root;
   enum Result ret;
 
   if (!(format=getenv("CPMTOOLSFMT"))) format=FORMAT;
-  while ((c=getopt(argc,argv,"T:f:nh?"))!=EOF) switch(c)
+  while ((c=getopt(argc,argv,"T:f:nuh?"))!=EOF) switch(c)
   {
     case 'f': format=optarg; break;
     case 'T': devopts=optarg; break;
     case 'n': norepair=1; break;
+    case 'u': uppercase=1; break;
     case 'h':
     case '?': usage=1; break;
   }
@@ -608,7 +606,7 @@ int main(int argc, char *argv[])
       fprintf(stderr,"%s: cannot open %s for writing, no repair possible\n",cmd,image);
     }
   }
-  if (cpmReadSuper(&sb,&root,format)==-1)
+  if (cpmReadSuper(&sb,&root,format,uppercase)==-1)
   {
     fprintf(stderr,"%s: cannot read superblock (%s)\n",cmd,boo);
     exit(1);

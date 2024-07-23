@@ -62,8 +62,8 @@ mkfs.cpm$(EXEEXT):	mkfs.cpm$(OBJEXT) cpmfs$(OBJEXT) getopt$(OBJEXT) getopt1$(OBJ
 fsck.cpm$(EXEEXT):	fsck.cpm$(OBJEXT) cpmfs$(OBJEXT) getopt$(OBJEXT) getopt1$(OBJEXT) $(DEVICEOBJ) $(LDDEPS)
 		$(CC) $(LDFLAGS) -o $@ fsck.cpm$(OBJEXT) cpmfs$(OBJEXT) getopt$(OBJEXT) getopt1$(OBJEXT) $(DEVICEOBJ) $(LIBS)
 
-fsed.cpm$(EXEEXT):	fsed.cpm$(OBJEXT) cpmfs$(OBJEXT) getopt$(OBJEXT) getopt1$(OBJEXT) $(DEVICEOBJ) $(LDDEPS)
-		$(CC) $(LDFLAGS) -o $@ fsed.cpm$(OBJEXT) cpmfs$(OBJEXT) getopt$(OBJEXT) getopt1$(OBJEXT) $(DEVICEOBJ) $(LIBS)
+fsed.cpm$(EXEEXT):	fsed.cpm$(OBJEXT) cpmfs$(OBJEXT) term_curses$(OBJEXT) getopt$(OBJEXT) getopt1$(OBJEXT) $(DEVICEOBJ) $(LDDEPS)
+		$(CC) $(LDFLAGS) -o $@ fsed.cpm$(OBJEXT) cpmfs$(OBJEXT) term_curses$(OBJEXT) getopt$(OBJEXT) getopt1$(OBJEXT) $(DEVICEOBJ) $(LIBS)
 
 fsck.test:	fsck.cpm
 		-./fsck.cpm -f ibm-3740 -n badfs/status
@@ -90,7 +90,7 @@ install:	all
 		$(INSTALL) -s -m 755 cpmchattr $(DESTDIR)$(BINDIR)/cpmchattr
 		$(INSTALL) -s -m 755 mkfs.cpm $(DESTDIR)$(BINDIR)/mkfs.cpm
 		$(INSTALL) -s -m 755 fsck.cpm $(DESTDIR)$(BINDIR)/fsck.cpm
-		[ "$(FSED_CPM)" == '' ] || $(INSTALL) -s -m 755 fsed.cpm $(DESTDIR)$(BINDIR)/fsed.cpm
+		[ "$(FSED_CPM)" = '' ] || $(INSTALL) -s -m 755 fsed.cpm $(DESTDIR)$(BINDIR)/fsed.cpm
 		$(INSTALL_DATA) diskdefs $(DESTDIR)@datarootdir@/diskdefs
 		$(INSTALL_DATA) cpmls.1 $(DESTDIR)$(MANDIR)/man1/cpmls.1
 		$(INSTALL_DATA) cpmcp.1 $(DESTDIR)$(MANDIR)/man1/cpmcp.1

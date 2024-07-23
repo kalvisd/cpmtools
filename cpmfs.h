@@ -1,49 +1,8 @@
 #ifndef CPMFS_H
 #define CPMFS_H
 
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <utime.h>
-
-#ifdef _WIN32
-    #include <windows.h>
-    #include <winioctl.h>
-    /* To make it compile on NT: extracts from Linux 2.0 *
-     * <statbuf.h> and <sys/stat.h>                      */
-    #define __S_IFMT        0170000 /* These bits determine file type.  */
-    #define __S_IFDIR       0040000 /* Directory.  */
-    #define __S_IFREG       0100000 /* Regular file.  */
-    #define __S_IWUSR       0000200 /* Writable for user.  */
-    #define __S_IWGRP       0000200 /* Writable for group.  */
-    #define __S_IWOTH       0000200 /* Writable for others.  */
-
-    #define __S_ISTYPE(mode, mask)  (((mode) & __S_IFMT) == (mask))
-    #define __S_ISTYPE(mode, mask)  (((mode) & __S_IFMT) == (mask))
-    /* These bits are defined in Borland C++ 5 but not in MS Visual C++ */
-    #ifndef S_ISDIR
-    # define S_ISDIR(mode)   __S_ISTYPE((mode), __S_IFDIR)
-    #endif
-    #ifndef S_ISREG
-    # define S_ISREG(mode)   __S_ISTYPE((mode), __S_IFREG)
-    #endif
-    #ifndef S_IWUSR
-    #define S_IWUSR __S_IWUSR
-    #endif
-    #ifndef S_IWGRP
-    #define S_IWGRP __S_IWGRP
-    #endif
-    #ifndef S_IWOTH
-    #define S_IWOTH __S_IWOTH
-    #endif
-
-    #include <io.h>            /* For open(), lseek() etc. */
-    #ifndef HAVE_MODE_T
-    typedef int mode_t;
-    #endif
-#endif
-
 #ifdef __cplusplus
-        extern "C" {
+extern "C" {
 #endif
 
 #include "device.h"
@@ -136,13 +95,16 @@ struct dsDate
 struct cpmSuperBlock
 {
   struct Device dev;
+  int uppercase;
 
   int secLength;
   int tracks;
   int sectrk;
   int blksiz;
   int maxdir;
+  int dirblks;
   int skew;
+  int bootsec;
   int boottrk;
   off_t offset;
   int type;
@@ -177,13 +139,14 @@ struct cpmStatFS
   long f_namelen;
 };
 
-extern const char cmd[];
-extern const char *boo;
+extern char const cmd[];
+extern char const *boo;
 
-int match(const char *a, const char *pattern);
+int match(char const *a, char const *pattern);
 void cpmglob(int opti, int argc, char * const argv[], struct cpmInode *root, int *gargc, char ***gargv);
+void cpmglobfree(char **dirent, int entries);
 
-int cpmReadSuper(struct cpmSuperBlock *drive, struct cpmInode *root, const char *format);
+int cpmReadSuper(struct cpmSuperBlock *drive, struct cpmInode *root, const char *format, int uppercase);
 int cpmNamei(const struct cpmInode *dir, const char *filename, struct cpmInode *i);
 void cpmStatFS(const struct cpmInode *ino, struct cpmStatFS *buf);
 int cpmUnlink(const struct cpmInode *dir, const char *fname);
@@ -195,17 +158,17 @@ int cpmAttrGet(struct cpmInode *ino, cpm_attr_t *attrib);
 int cpmAttrSet(struct cpmInode *ino, cpm_attr_t attrib);
 int cpmChmod(struct cpmInode *ino, mode_t mode);
 int cpmOpen(struct cpmInode *ino, struct cpmFile *file, mode_t mode);
-int cpmRead(struct cpmFile *file, char *buf, int count);
-int cpmWrite(struct cpmFile *file, const char *buf, int count);
+ssize_t cpmRead(struct cpmFile *file, char *buf, size_t count);
+ssize_t cpmWrite(struct cpmFile *file, const char *buf, size_t count);
 int cpmClose(struct cpmFile *file);
 int cpmCreat(struct cpmInode *dir, const char *fname, struct cpmInode *ino, mode_t mode);
 void cpmUtime(struct cpmInode *ino, struct utimbuf *times);
 int cpmSync(struct cpmSuperBlock *sb);
-void cpmUmount(struct cpmSuperBlock *sb);
+int cpmUmount(struct cpmSuperBlock *sb);
 int cpmCheckDs(struct cpmSuperBlock *sb);
 
 #ifdef __cplusplus
-	}
+}
 #endif
 
 #endif

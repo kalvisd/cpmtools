@@ -10,10 +10,6 @@
 
 #include "getopt_.h"
 #include "cpmfs.h"
-
-#ifdef USE_DMALLOC
-#include <dmalloc.h>
-#endif
 /*}}}*/
 
 /* variables */ /*{{{*/
@@ -27,23 +23,42 @@ static int namecmp(const void *a, const void *b)
   return strcmp(*((const char * const *)a),*((const char * const *)b));
 }
 /*}}}*/
+/* onlyuser0 -- do all entries belong to user 0? */ /*{{{*/
+static int onlyuser0(char ** const dirent, int entries)
+{
+  int i;
+
+  for (i=0; i<entries; ++i)
+  {
+    if (dirent[i][0]!='.' && (dirent[i][0]!='0' || dirent[i][1]!='0')) return 0;
+  }
+
+  return 1;
+}
+/*}}}*/
 /* olddir  -- old style output */ /*{{{*/
 static void olddir(char **dirent, int entries)
 {
-  int i,j,k,l,user,announce;
+  int i,j,k,l,user,announce,showuser,files;
 
-  announce=0;
+  showuser=!onlyuser0(dirent,entries);
+  files=0;
   for (user=0; user<32; ++user)
   {
+    announce=1;
     for (i=l=0; i<entries; ++i)
     {
+      /* This selects real regular files implicitly, because only those have
+       * the user in their name.  ".", ".." and the password file do not.
+       */
       if (dirent[i][0]=='0'+user/10 && dirent[i][1]=='0'+user%10)
       {
-        if (announce==1)
+        ++files;
+        if (announce && showuser)
         {
           printf("User %d\n",user);
+          announce=0;
         }
-        announce=2;
         if (l%4) printf(" : ");
         for (j=2; dirent[i][j] && dirent[i][j]!='.'; ++j) putchar(toupper(dirent[i][j]));
         k=j; while (k<11) { putchar(' '); ++k; }
@@ -52,18 +67,19 @@ static void olddir(char **dirent, int entries)
         for (; k<3; ++k) putchar(' ');
         ++l;
       }
-      if (l && (l%4)==0) {
+      if (l && (l%4)==0)
+      {
 	l = 0;
 	putchar('\n');
       }	
     }
-    if (l%4) {
-	putchar('\n');
+    if (l%4)
+    {
+      putchar('\n');
     }
-
-    if (announce==2) announce=1;
   }
-  if (entries==0) printf("No files\n");
+
+  if (files==0) printf("No file\n");
 }
 /*}}}*/
 /* oldddir -- old style long output */ /*{{{*/
@@ -73,7 +89,7 @@ static void oldddir(char **dirent, int entries, struct cpmInode *ino)
   struct cpmStat statbuf;
   struct cpmInode file;
 
-  if (entries)
+  if (entries>2)
   {
     int i,j,k,l,announce,user;
 
@@ -143,7 +159,7 @@ static void old3dir(char **dirent, int entries, struct cpmInode *ino)
   struct cpmStat statbuf;
   struct cpmInode file;
 
-  if (entries)
+  if (entries>2)
   {
     int i,j,k,l,announce,user, attrib;
     int totalBytes=0,totalRecs=0;
@@ -182,7 +198,7 @@ static void old3dir(char **dirent, int entries, struct cpmInode *ino)
           totalRecs+=(statbuf.size+127)/128;
           printf(" %5.1ldk",(long) (statbuf.size+buf.f_bsize-1) /
 			buf.f_bsize*(buf.f_bsize/1024));
-          printf(" %6.1ld ",(long)(statbuf.size/128));
+          printf(" %6.1ld ",(long)((statbuf.size+127)/128));
           putchar((attrib & CPM_ATTR_F1)   ? '1' : ' ');
           putchar((attrib & CPM_ATTR_F2)   ? '2' : ' ');
           putchar((attrib & CPM_ATTR_F3)   ? '3' : ' ');          
@@ -346,20 +362,21 @@ int main(int argc, char *argv[])
   const char *format;
   const char *devopts=NULL;
   int c,usage=0;
-  struct cpmSuperBlock drive;
+  struct cpmSuperBlock super;
   struct cpmInode root;
   int style=0;
   int changetime=0;
+  int uppercase=0;
   int inode=0;
   char **gargv;
   int gargc;
   static char starlit[2]="*";
-  static char * const star[]={starlit};
+  static char * const star[]={ starlit };
   /*}}}*/
 
   /* parse options */ /*{{{*/
   if (!(format=getenv("CPMTOOLSFMT"))) format=FORMAT;
-  while ((c=getopt(argc,argv,"cT:f:ih?dDFlA"))!=EOF) switch(c)
+  while ((c=getopt(argc,argv,"cT:f:ih?dDFlAu"))!=EOF) switch(c)
   {
     case 'f': format=optarg; break;
     case 'T': devopts=optarg; break;
@@ -372,6 +389,7 @@ int main(int argc, char *argv[])
     case 'A': style=5; break;
     case 'c': changetime=1; break;
     case 'i': inode=1; break;
+    case 'u': uppercase=1; break;
   }
 
   if (optind==argc) usage=1;
@@ -379,17 +397,21 @@ int main(int argc, char *argv[])
 
   if (usage)
   {
-    fprintf(stderr,"Usage: %s [-f format] [-T libdsk-type] [-d|-D|-F|-A|[-l][-c][-i]] image [file ...]\n",cmd);
+#ifdef HAVE_LIBDSK_H
+    fprintf(stderr,"Usage: %s [-f format] [-T libdsk-type] [-d|-D|-F|-A|[-l][-c][-i]] [-u] image [file ...]\n",cmd);
+#else
+    fprintf(stderr,"Usage: %s [-f format] [-d|-D|-F|-A|[-l][-c][-i]] [-u] image [file ...]\n",cmd);
+#endif
     exit(1);
   }
   /*}}}*/
   /* open image */ /*{{{*/
-  if ((err=Device_open(&drive.dev,image,O_RDONLY,devopts))) 
+  if ((err=Device_open(&super.dev,image,O_RDONLY,devopts))) 
   {
     fprintf(stderr,"%s: cannot open %s (%s)\n",cmd,image,err);
     exit(1);
   }
-  if (cpmReadSuper(&drive,&root,format)==-1)
+  if (cpmReadSuper(&super,&root,format,uppercase)==-1)
   {
     fprintf(stderr,"%s: cannot read superblock (%s)\n",cmd,boo);
     exit(1);
@@ -402,5 +424,7 @@ int main(int argc, char *argv[])
   else if (style==3) old3dir(gargv,gargc,&root);
   else if (style==5) lsattr(gargv, gargc, &root); 
   else ls(gargv,gargc,&root,style==4,changetime,inode);
+  cpmglobfree(gargv,gargc);
+  cpmUmount(&super);
   exit(0);
 }

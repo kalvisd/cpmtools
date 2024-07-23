@@ -1,4 +1,4 @@
-.TH MKFS.CPM 1 "Jan 23, 2019" "CP/M tools" "User commands"
+.TH MKFS.CPM 1 "October 10, 2022" "CP/M tools" "User commands"
 .SH NAME \"{{{roff}}}\"{{{
 mkfs.cpm \- make a CP/M file system
 .\"}}}
@@ -12,6 +12,7 @@ mkfs.cpm \- make a CP/M file system
 .RB [ \-L
 .IR label ]
 .RB [ \-t ]
+.RB [ \-u ]
 .I image
 .ad b
 .\"}}}
@@ -30,6 +31,8 @@ are written to sequential sectors, padding with 0xe5 if needed.
 Label the file system.  This is only supported by CP/M Plus.
 .IP "\fB\-t\fP"
 Create time stamps.
+.IP "\fB\-u\fP"
+Show all CP/M file names in upper case.
 .\"}}}
 .SH "RETURN VALUE" \"{{{
 Upon successful completion, exit code 0 is returned.
@@ -44,7 +47,7 @@ CPMTOOLSFMT     Default format
 ${prefix}/share/diskdefs	CP/M disk format definitions
 .\"}}}
 .SH AUTHORS \"{{{
-This program is copyright 1997\(en2012 Michael Haardt
+This program is copyright 1997\(en2021 Michael Haardt
 <michael@moria.de>.  The Windows port is copyright 2000, 2001, 2011 John Elliott
 <jce@seasip.demon.co.uk>.
 .PP

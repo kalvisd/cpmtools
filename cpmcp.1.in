@@ -10,6 +10,7 @@ cpmcp \- copy files from and to CP/M disks
 .RB [ \-p ]
 .RB [ \-t ]
 .I image
+.RB [ \-u ]
 \fIuser\fP\fB:\fP\fIfile\fP \fIfile\fP
 .br
 .B cpmcp
@@ -18,6 +19,7 @@ cpmcp \- copy files from and to CP/M disks
 .RB [ \-p ]
 .RB [ \-t ]
 .I image
+.RB [ \-u ]
 \fIuser\fP\fB:\fP\fIfile\fP ... \fIdirectory\fP
 .br
 .B cpmcp
@@ -26,6 +28,7 @@ cpmcp \- copy files from and to CP/M disks
 .RB [ \-p ]
 .RB [ \-t ]
 .I image
+.RB [ \-u ]
 \fIfile\fP \fIuser\fP\fB:\fP\fIfile\fP
 .br
 .B cpmcp
@@ -34,6 +37,7 @@ cpmcp \- copy files from and to CP/M disks
 .RB [ \-p ]
 .RB [ \-t ]
 .I image
+.RB [ \-u ]
 \fIfile\fP ... \fIuser\fP\fB:\fP
 .ad b
 .\"}}}
@@ -48,6 +52,11 @@ You can use \fB*\fP and \fB?\fP in CP/M file names, which have the same
 meaning in
 .IR sh (1)
 file name patterns.
+.PP
+On CP/M, the slash is a legal file name character.  When copying such files
+to the host, it is translated to a comma.  Filenames with a comma have that
+translated back to a slash on CP/M.  That is no restriction, because a comma
+is not a legal CP/M filename character.
 .\"}}}
 .SH OPTIONS \"{{{
 .IP "\fB\-f\fP \fIformat\fP"
@@ -60,6 +69,8 @@ Preserve time stamps when copying files from CP/M to UNIX (not
 implemented for copying the other way so far).
 .IP \fB\-t\fP
 Convert text files between CP/M and UNIX conventions.
+.IP "\fB\-u\fP"
+Show all CP/M file names in upper case.
 .\"}}}
 .SH "RETURN VALUE" \"{{{
 Upon successful completion, exit code 0 is returned.
@@ -74,7 +85,7 @@ CPMTOOLSFMT     Default format
 @DATADIR@/diskdefs	CP/M disk format definitions
 .\"}}}
 .SH AUTHORS \"{{{
-This program is copyright 1997\(en2012 Michael Haardt
+This program is copyright 1997\(en2021 Michael Haardt
 <michael@moria.de>.  The Windows port is copyright 2000, 2001, 2011 John Elliott
 <jce@seasip.demon.co.uk>.
 .PP

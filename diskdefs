@@ -324,6 +324,7 @@ diskdef kpii
   sectrk 10
   blocksize 1024
   maxdir 64
+  dirblks 4
   skew 0
   boottrk 1
   os 2.2
@@ -337,6 +338,7 @@ diskdef kpiv
   sectrk 10
   blocksize 2048
   maxdir 64
+  dirblks 2
   skew 0
   boottrk 1
   os 2.2
@@ -1818,4 +1820,141 @@ diskdef svi707
   skew 0
   boottrk 3
   os 2.2
+end
+
+# Intel MDS/22 8" Double Density
+diskdef mds-dd
+  seclen 128
+  tracks 77
+  sectrk 52
+  blocksize 2048
+  maxdir 128
+  skew 0
+  boottrk 2
+  os 2.2
+end
+
+# Intel MDS/22 8" Single Density. Untested.
+diskdef mds-sd
+  seclen 128
+  tracks 77
+  sectrk 26
+  blocksize 1024
+  maxdir 64
+  skew 0
+  boottrk 2
+  os 2.2
+end
+
+# CF card in PCMCIA slot on NC200 with cpmish
+diskdef nc200cf
+  seclen 512
+  tracks 256
+  sectrk 256
+  blocksize 16384
+  maxdir 512
+  boottrk 0
+  os 2.2
+end
+
+# Floppy image on NC200 with cpmish
+diskdef nc200cpm
+  seclen 512
+  tracks 80
+  sectrk 18
+  blocksize 2048
+  maxdir 128
+  boottrk 2
+  os 2.2
+end
+
+# ZCN format drive partitions in nc100em's nc100.card
+# use this for a bootable A: drive
+# (assumes ZCN system is 12k, which it has been for years)
+diskdef zcna_boot
+  seclen 1024
+  tracks 256
+  sectrk 1
+  blocksize 1024
+  maxdir 64
+  skew 0
+  boottrk 13
+  os 2.2
+end
+
+# use this for a non-bootable A: drive
+diskdef zcna_nonboot
+  seclen 1024
+  tracks 256
+  sectrk 1
+  blocksize 1024
+  maxdir 64
+  skew 0
+  boottrk 1
+  os 2.2
+end
+
+# ZCN b/c/d all assumed to be non-bootable
+diskdef zcnb
+  seclen 1024
+  tracks 256
+  sectrk 1
+  blocksize 1024
+  maxdir 64
+  skew 0
+  boottrk 1
+  os 2.2
+  offset 256KB
+end
+
+diskdef zcnc
+  seclen 1024
+  tracks 256
+  sectrk 1
+  blocksize 1024
+  maxdir 64
+  skew 0
+  boottrk 1
+  os 2.2
+  offset 512KB
+end
+
+diskdef zcnd
+  seclen 1024
+  tracks 256
+  sectrk 1
+  blocksize 1024
+  maxdir 64
+  skew 0
+  boottrk 1
+  os 2.2
+  offset 768KB
+end
+
+# Hewlett-Packard HP9000-200 - 70-track SS drive that emulates a
+# 35 track DSDD 48 tpi 5.25"
+diskdef HP25
+  seclen 256
+  tracks 66
+  sectrk 16
+  blocksize 1024
+  maxdir 128
+  skew 0
+  boottrk 3
+  os 2.2
+end
+
+
+
+diskdef yaze512
+# BSH 4 BLM 15 EXM 1 DSM 255 DRM 1023 AL0 0FFH AL1 0FFH OFS 0
+seclen 128
+tracks 4096
+sectrk 8
+blocksize 2048
+maxdir 1024
+skew 1
+offset 128
+boottrk 0
+os 3
 end

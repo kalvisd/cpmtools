@@ -1,16 +1,12 @@
-Changes since 2.20:
+Changes since 2.22:
 
-o  rc759 diskdef renamed to rc75x, as it works for the series
-o  diskdefs.5 added
-o  Many disk formats from Larry Kraemer added
-o  Renamed ampdsdd to ampro400d for consistency with libdsk and because
-   ampdsdd very likely was wrong
-o  Check for invalid block size
-o  Output line number for diskdefs errors
-o  Correctly output create or access time for CP/M 3 in cpmls
-o  Spectravideo SVI-728 diskdef added
-o  $DESTDIR support
-o  Correctly handle empty files
-o  Fix block allocation for large directories.
-o  Fix time stamp conversion
-o  Allow user number 16-31 for CP/M 2.2
+o  Use 16 bit block pointers for file systems > 256 blocks, not >= 256
+o  Translate CP/M file name character '/' to ',' for the host and back
+o  dirblks in Kaypro format fixed
+o  Misc fixes for directory listing
+o  Added bootsec diskdefs option
+o  Check Device_close return value
+o  Check for too small block number when reading file data
+o  Replaced obsolete macros in configure.in
+o  Cygwin/Windows support did not build any more and likely not for quite
+   some time, so it was removed.

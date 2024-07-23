@@ -66,6 +66,16 @@ convenience upper and lower case are both accepted and only the first
 letter is significant, thus 2KB, 8MB, 1000trk and 16sec are valid
 values.  The \fBoffset\fP must appear subsequent to track, sector and sector
 length values for the sector and track units to work.
+.LP
+Note that it is possible to reserve space between the directory and
+the beginning of data.  Although typically data follows the directory,
+some systems used this to store extra data instead of using more
+system tracks (see the fields \fBALV0\fP and \fBALV1\fP in the
+DPB).
+.LP
+There are disk formats that map multiple logical tracks onto a physical
+track, which allows a little bit more capacity in case the system image
+size does not match the physical track capacity well.
 .\"}}}
 .SS "Directory entries" \"{{{
 The directory is a sequence of directory entries (also called extents),
@@ -158,7 +168,7 @@ block is allocated and Bc 0 has no meaning.
 .LP
 .\"{{{ Al     = allocated blocks
 \fBAl\fP stores block pointers.  If the disk capacity minus boot
-tracks but including the directory area is less than 256 blocks, Al
+tracks but including the directory area is less than or equal to 256 blocks, Al
 is interpreted as 16 byte-values, otherwise as 8 double-byte-values.
 Since the directory area is not subtracted, the directory area starts
 with block 0 and files can never allocate block 0, which is why this

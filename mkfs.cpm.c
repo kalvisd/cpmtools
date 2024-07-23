@@ -10,10 +10,6 @@
 
 #include "getopt_.h"
 #include "cpmfs.h"
-
-#ifdef USE_DMALLOC
-#include <dmalloc.h>
-#endif
 /*}}}*/
 /* #defines */ /*{{{*/
 #ifndef O_BINARY
@@ -22,7 +18,7 @@
 /*}}}*/
 
 /* mkfs -- make file system */ /*{{{*/
-static int mkfs(struct cpmSuperBlock *drive, const char *name, const char *format, const char *label, char *bootTracks, int timeStamps)
+static int mkfs(struct cpmSuperBlock *drive, const char *name, const char *format, const char *label, char *bootTracks, int timeStamps, int uppercase)
 {
   /* variables */ /*{{{*/
   unsigned int i;
@@ -116,7 +112,7 @@ static int mkfs(struct cpmSuperBlock *drive, const char *name, const char *forma
       fprintf(stderr,"%s: can not open %s (%s)\n",cmd,name,err);
       exit(1);
     }
-    cpmReadSuper(&super,&root,format);
+    cpmReadSuper(&super,&root,format,uppercase);
 
     records=root.sb->maxdir/8;
     if (!(ds=malloc(records*128)))
@@ -160,6 +156,7 @@ int main(int argc, char *argv[]) /*{{{*/
 {
   char *image;
   const char *format;
+  int uppercase=0;
   int c,usage=0;
   struct cpmSuperBlock drive;
   struct cpmInode root;
@@ -170,7 +167,7 @@ int main(int argc, char *argv[]) /*{{{*/
   const char *boot[4]={(const char*)0,(const char*)0,(const char*)0,(const char*)0};
 
   if (!(format=getenv("CPMTOOLSFMT"))) format=FORMAT;
-  while ((c=getopt(argc,argv,"b:f:L:th?"))!=EOF) switch(c)
+  while ((c=getopt(argc,argv,"b:f:L:tuh?"))!=EOF) switch(c)
   {
     case 'b':
     {
@@ -184,6 +181,7 @@ int main(int argc, char *argv[]) /*{{{*/
     case 'f': format=optarg; break;
     case 'L': label=optarg; break;
     case 't': timeStamps=1; break;
+    case 'u': uppercase=1; break;
     case 'h':
     case '?': usage=1; break;
   }
@@ -193,11 +191,11 @@ int main(int argc, char *argv[]) /*{{{*/
 
   if (usage)
   {
-    fprintf(stderr,"Usage: %s [-f format] [-b boot] [-L label] [-t] image\n",cmd);
+    fprintf(stderr,"Usage: %s [-f format] [-b boot] [-L label] [-t] [-u] image\n",cmd);
     exit(1);
   }
   drive.dev.opened=0;
-  cpmReadSuper(&drive,&root,format);
+  cpmReadSuper(&drive,&root,format,uppercase);
   bootTrackSize=drive.boottrk*drive.secLength*drive.sectrk;
   if ((bootTracks=malloc(bootTrackSize))==(void*)0)
   {
@@ -224,7 +222,7 @@ int main(int argc, char *argv[]) /*{{{*/
     used+=size;
     close(fd);
   }
-  if (mkfs(&drive,image,format,label,bootTracks,timeStamps)==-1)
+  if (mkfs(&drive,image,format,label,bootTracks,timeStamps,uppercase)==-1)
   {
     fprintf(stderr,"%s: can not make new file system: %s\n",cmd,boo);
     exit(1);

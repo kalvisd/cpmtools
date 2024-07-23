@@ -9,14 +9,10 @@
 #include <string.h>
 #include <limits.h>
 #include <stdlib.h>
-#include <utime.h>
+#include <time.h>
 
 #include "getopt_.h"
 #include "cpmfs.h"
-
-#ifdef USE_DMALLOC
-#include <dmalloc.h>
-#endif
 /*}}}*/
 
 const char cmd[]="cpmcp";
@@ -60,7 +56,7 @@ static int cpmToUnix(const struct cpmInode *root, const char *src, const char *d
     {
       int crpending=0;
       int ohno=0;
-      int res;
+      ssize_t res;
       char buf[4096];
 
       while ((res=cpmRead(&file,buf,sizeof(buf)))>0)
@@ -126,6 +122,7 @@ int main(int argc, char *argv[])
   const char *image;
   const char *format;
   const char *devopts=NULL;
+  int uppercase=0;
   int c,readcpm=-1,todir=-1;
   struct cpmInode root;
   struct cpmSuperBlock super;
@@ -136,14 +133,15 @@ int main(int argc, char *argv[])
 
   /* parse options */ /*{{{*/
   if (!(format=getenv("CPMTOOLSFMT"))) format=FORMAT;
-  while ((c=getopt(argc,argv,"T:f:h?pt"))!=EOF) switch(c)
+  while ((c=getopt(argc,argv,"T:f:ptuh?"))!=EOF) switch(c)
   {
     case 'T': devopts=optarg; break;
     case 'f': format=optarg; break;
-    case 'h':
-    case '?': usage(); break;
     case 'p': preserve=1; break;
     case 't': text=1; break;
+    case 'u': uppercase=1; break;
+    case 'h':
+    case '?': usage(); break;
   }
   /*}}}*/
   /* parse arguments */ /*{{{*/
@@ -181,7 +179,7 @@ int main(int argc, char *argv[])
     fprintf(stderr,"%s: cannot open %s (%s)\n",cmd,image,err);
     exit(1);
   }
-  if (cpmReadSuper(&super,&root,format)==-1)
+  if (cpmReadSuper(&super,&root,format,uppercase)==-1)
   {
     fprintf(stderr,"%s: cannot read superblock (%s)\n",cmd,boo);
     exit(1);
@@ -201,9 +199,13 @@ int main(int argc, char *argv[])
 
       if (todir)
       {
+        char *translate;
+
         strcpy(dest,last);
         strcat(dest,"/");
+        translate=dest+strlen(dest);
         strcat(dest,gargv[i]+2);
+        while ((translate=strchr(translate,'/'))) *translate=',';
       }
       else strcpy(dest,last);
       if (cpmToUnix(&root,gargv[i],dest)) exitcode=1;
@@ -231,6 +233,7 @@ int main(int argc, char *argv[])
       {
         struct cpmInode ino;
         char cpmname[2+8+1+3+1]; /* 00foobarxy.zzy\0 */
+        char *translate;
         struct stat st;
 
         stat(argv[i],&st);
@@ -244,6 +247,10 @@ int main(int argc, char *argv[])
         {
           snprintf(cpmname,sizeof(cpmname),"%02d%s",userNumber(argv[argc-1]),strchr(argv[argc-1],':')+1);
         }
+
+        translate=cpmname;
+        while ((translate=strchr(translate,','))) *translate='/';
+
         if (cpmCreat(&root,cpmname,&ino,0666)==-1) /* just cry */ /*{{{*/
         {
           fprintf(stderr,"%s: can not create %s: %s\n",cmd,cpmname,boo);
@@ -259,15 +266,15 @@ int main(int argc, char *argv[])
           cpmOpen(&ino,&file,O_WRONLY);
           do
           {
-            unsigned int j;
+            ssize_t j;
 
-            for (j=0; j<(sizeof(buf)/2) && (c=getc(ufp))!=EOF; ++j)
+            for (j=0; j<((ssize_t)sizeof(buf)/2) && (c=getc(ufp))!=EOF; ++j)
             {
               if (text && c=='\n') buf[j++]='\r';
               buf[j]=c;
             }
             if (text && c==EOF) buf[j++]='\032';
-            if (cpmWrite(&file,buf,j)!=(ssize_t)j)
+            if (cpmWrite(&file,buf,j)!=j)
             {
               fprintf(stderr,"%s: can not write %s: %s\n",cmd,dest,boo);
               ohno=1;
@@ -289,11 +296,19 @@ int main(int argc, char *argv[])
             cpmUtime(&ino,&times);
           }
         }
-        fclose(ufp);
+        if (fclose(ufp)==EOF)
+        {
+          fprintf(stderr,"%s: can not close %s: %s\n",cmd,dest,strerror(errno));
+          exitcode=1;
+        }
       }
     }
   }
   /*}}}*/
-  cpmUmount(&super);
+  if (cpmUmount(&super)==-1)
+  {
+    fprintf(stderr,"%s: can not umount device: %s\n",cmd,boo);
+    exitcode=1;
+  }
   exit(exitcode);
 }

@@ -7,6 +7,7 @@ fsed.cpm \- edit a CP/M file system
 .B fsed.cpm
 .RB [ \-f
 .IR format ]
+.RB [ \-u ]
 .I image
 .ad b
 .\"}}}
@@ -22,6 +23,8 @@ Use the given CP/M disk \fIformat\fP instead of the default format.
 .IP "\fB\-T\fP \fIlibdsk-type\fP"
 libdsk driver type, e.g. \fBtele\fP for Teledisk images or \fBraw\fP for raw images 
 (requires building cpmtools with support for libdsk).
+.IP "\fB\-u\fP"
+Show all CP/M file names in upper case.
 .\"}}}
 .SH "RETURN VALUE" .\"{{{
 Upon successful completion, exit code 0 is returned.
@@ -36,7 +39,7 @@ CPMTOOLSFMT     Default format
 @DATADIR@/diskdefs	CP/M disk format definitions
 .\"}}}
 .SH AUTHORS \"{{{
-This program is copyright 1997\(en2012 Michael Haardt
+This program is copyright 1997\(en2021 Michael Haardt
 <michael@moria.de>.  The Windows port is copyright 2000, 2001, 2011 John Elliott
 <jce@seasip.demon.co.uk>.
 .PP

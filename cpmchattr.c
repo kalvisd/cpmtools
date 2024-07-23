@@ -8,10 +8,6 @@
 
 #include "getopt_.h"
 #include "cpmfs.h"
-
-#ifdef USE_DMALLOC
-#include <dmalloc.h>
-#endif
 /*}}}*/
 
 const char cmd[]="cpmchattr";
@@ -23,6 +19,7 @@ int main(int argc, char *argv[]) /*{{{*/
   const char *image;
   const char *format;
   const char *devopts=NULL;
+  int uppercase=0;
   int c,i,usage=0,exitcode=0;
   struct cpmSuperBlock drive;
   struct cpmInode root;
@@ -33,10 +30,11 @@ int main(int argc, char *argv[]) /*{{{*/
 
   /* parse options */ /*{{{*/
   if (!(format=getenv("CPMTOOLSFMT"))) format=FORMAT;
-  while ((c=getopt(argc,argv,"T:f:h?"))!=EOF) switch(c)
+  while ((c=getopt(argc,argv,"T:f:uh?"))!=EOF) switch(c)
   {
     case 'T': devopts=optarg; break;
     case 'f': format=optarg; break;
+    case 'u': uppercase=1; break;
     case 'h':
     case '?': usage=1; break;
   }
@@ -50,7 +48,7 @@ int main(int argc, char *argv[]) /*{{{*/
 
   if (usage)
   {
-    fprintf(stderr,"Usage: %s [-f format] [-T dsktype] image [NMrsa1234] pattern ...\n",cmd);
+    fprintf(stderr,"Usage: %s [-f format] [-T dsktype] [-u] image [NMrsa1234] pattern ...\n",cmd);
     exit(1);
   }
   /*}}}*/
@@ -60,7 +58,7 @@ int main(int argc, char *argv[]) /*{{{*/
     fprintf(stderr,"%s: cannot open %s (%s)\n",cmd,image,err);
     exit(1);
   }
-  if (cpmReadSuper(&drive,&root,format)==-1)
+  if (cpmReadSuper(&drive,&root,format,uppercase)==-1)
   {
     fprintf(stderr,"%s: cannot read superblock (%s)\n",cmd,boo);
     exit(1);
